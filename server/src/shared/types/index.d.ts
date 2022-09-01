@@ -1,12 +1,13 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Express } from 'express-serve-static-core';
+import { Types } from 'mongoose';
 
 interface CookiesProps {
   jwt?: string;
 }
 
 export interface DecodedPayload {
-  user: string;
+  user: Types.ObjectId;
 }
 
 interface Context {

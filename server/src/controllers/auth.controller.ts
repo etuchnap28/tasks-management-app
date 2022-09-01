@@ -151,7 +151,7 @@ export const refresh = asyncHandler(async (req: Request, res: Response, next: Ne
     const decoded = jwt.verify(refreshToken, config.jwt.refreshTokenSecret);
     const user = (decoded as DecodedPayload).user;
 
-    if (foundUser._id.toString() !== user) {
+    if (foundUser._id.toString() !== user.toString()) {
       next(new AuthorizationError('refresh token is invalid'));
       return;
     }

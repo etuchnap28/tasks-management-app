@@ -13,6 +13,14 @@ interface CreateProjectReuest extends ValidatedRequestSchema {
   };
 }
 
+interface EditProjectRequest extends ValidatedRequestSchema {
+  [ContainerTypes.Body]: {
+    [key: string]: string | number | Date | undefined;
+    name?: string;
+    description?: string;
+  };
+}
+
 export const readProjects = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   const projects = await Project.find().exec();
   logger.trace(projects);
@@ -41,3 +49,40 @@ export const createProject = asyncHandler(
     res.status(201).json({ success: `New project ${req.body.name} created.` });
   }
 );
+
+export const editProject = asyncHandler(
+  async (req: ValidatedRequest<EditProjectRequest>, res: Response, next: NextFunction) => {
+    if (req.params.projectId === '') {
+      next(new APIError('Bad request', HTTPStatusCode.BAD_REQUEST, 'projectId is required'));
+      return;
+    }
+    const project = await Project.findById(req.params.projectId).exec();
+    if (project == null) {
+      next(new APIError('Bad request', HTTPStatusCode.BAD_REQUEST, 'Can not find project'));
+      return;
+    }
+    for (const key of Object.keys(req.body)) {
+      if (req.body[key] !== undefined) {
+        project.set(key, req.body[key]);
+      }
+    }
+    const result = await project.save();
+    logger.trace(result);
+    res.json(result);
+  }
+);
+
+export const deleteProject = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+  if (req.params.projectId === '') {
+    next(new APIError('Bad request', HTTPStatusCode.BAD_REQUEST, 'projectId is required'));
+    return;
+  }
+  const project = await Project.findById(req.params.projectId).exec();
+  if (project == null) {
+    next(new APIError('Bad request', HTTPStatusCode.BAD_REQUEST, 'Can not find project'));
+    return;
+  }
+  const result = await project.deleteOne();
+  logger.trace(result);
+  res.json({ message: `Project ${project.name} deleted.` });
+});
