@@ -1,3 +1,4 @@
+import { UserRoles } from '@shared/types/UserRoles';
 import joi from 'joi';
 
 export const loginSchema = joi.object({
@@ -19,4 +20,12 @@ export const registerSchema = joi.object({
     .string()
     .required()
     .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%]).{8,24}$/),
+  roles: joi.object({
+    Admin: joi
+      .number()
+      .integer()
+      .required()
+      .equal(UserRoles.ADMIN)
+      .messages({ 'any.only': `"Admin" value is not valid` }),
+  }),
 });

@@ -18,6 +18,7 @@ import { authRouter } from '@routes/auth.routes';
 import { usersRouter } from '@routes/users.routes';
 import { projectsRouter } from '@routes/projects.routes';
 import { tasksRouter } from '@routes/tasks.routes';
+import { adminRouter } from '@routes/admin.routes';
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.get('/ping', (req: Request, res: Response) => res.status(200).json({ message
 /* Routes */
 app.use('/auth', authRouter);
 app.use('/users', usersRouter);
+app.use('/admin', adminRouter);
 app.use('/projects', projectsRouter);
 app.use('/tasks', tasksRouter);
 

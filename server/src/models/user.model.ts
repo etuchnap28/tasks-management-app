@@ -1,5 +1,8 @@
 import mongoose, { Model, Schema, Types } from 'mongoose';
 import bcrypt from 'bcrypt';
+import { UserRoles } from '@shared/types/UserRoles';
+import { Project } from './project.model';
+import { Task } from './task.model';
 
 export interface IUser {
   firstname: string;
@@ -9,14 +12,12 @@ export interface IUser {
   refreshTokens?: Types.Array<string>;
   roles: {
     User: number;
-    Editor?: number;
     Admin?: number;
   };
   createdAt: number;
 }
 
 interface IUserMethods {
-  fullName: (this: IUser) => string;
   comparePassword: (this: IUser, inputPwd: string) => Promise<boolean>;
 }
 
@@ -44,12 +45,12 @@ const userSchema = new Schema<IUser, IUserMethods, UserModel>(
     roles: {
       type: {
         User: Number,
-        Editor: Number,
         Admin: Number,
       },
       default: {
-        User: 2001,
+        User: UserRoles.USER,
       },
+      _id: false,
     },
   },
   {
@@ -69,8 +70,16 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-userSchema.method('fullName', function fullName(this: IUser): string {
-  return `${this.firstname} ${this.lastname}`;
+userSchema.pre('deleteOne', { document: true, query: false }, async function (next) {
+  const projects = await Project.find({ userId: this._id });
+  for (const project of projects) {
+    await project.deleteOne();
+  }
+  const tasks = await Task.find({ userId: this._id });
+  for (const task of tasks) {
+    await task.deleteOne();
+  }
+  next();
 });
 
 userSchema.method('comparePassword', async function (this: IUser, inputPwd: string): Promise<boolean> {

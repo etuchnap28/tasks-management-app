@@ -1,5 +1,5 @@
 import { Project } from '@models/project.model';
-import { APIError } from '@shared/classes/exceptions';
+import { APIError, AuthorizationError } from '@shared/classes/exceptions';
 import { logger } from '@shared/classes/Logger';
 import { HTTPStatusCode } from '@shared/types/HttpStatusCode';
 import { Request, NextFunction, Response } from 'express';
@@ -33,6 +33,37 @@ export const readProject = asyncHandler(async (req: Request, res: Response, next
     return;
   }
   const project = await Project.findById(req.params.projectId).exec();
+  logger.trace(project);
+  res.json(project);
+});
+
+export const readProjectsByUser = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.context?.decodedPayload.user;
+  if (userId === undefined) {
+    next(new AuthorizationError());
+    return;
+  }
+  const projects = await Project.find({ userId }).exec();
+  logger.trace(projects);
+  res.json(projects);
+});
+
+export const readProjectByUser = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.context?.decodedPayload.user;
+  if (userId === undefined) {
+    next(new AuthorizationError());
+    return;
+  }
+  const projectId = req.params.projectId;
+  if (projectId === '') {
+    next(new APIError('Bad request', HTTPStatusCode.BAD_REQUEST, 'projectId is required'));
+    return;
+  }
+  const project = await Project.findOne({ $and: [{ _id: projectId }, { userId }] }).exec();
+  if (project == null) {
+    next(new APIError('Bad request', HTTPStatusCode.BAD_REQUEST, 'can not find project'));
+    return;
+  }
   logger.trace(project);
   res.json(project);
 });

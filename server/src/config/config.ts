@@ -23,6 +23,11 @@ const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET ?? 'refreshSecret2
 const ENV = process.env.NODE_ENV ?? 'development';
 const isDevEnvironment = () => ENV === 'development';
 
+const ACCESS_TOKEN_LIFE = isDevEnvironment() ? '1h' : '10m';
+const REFRESH_TOKEN_LIFE = isDevEnvironment() ? '12h' : '1h';
+
+const JWT_COOKIE_LIFE = isDevEnvironment() ? 12 * 60 * 60 * 1000 : 60 * 60 * 1000;
+
 export const config = {
   app: {
     env: ENV,
@@ -36,8 +41,13 @@ export const config = {
     allowedOrigins: ALLOWED_ORIGINS,
     corsOptions: CORS_OPTIONS,
   },
+  cookie: {
+    jwtLife: JWT_COOKIE_LIFE,
+  },
   jwt: {
     accessTokenSecret: ACCESS_TOKEN_SECRET,
     refreshTokenSecret: REFRESH_TOKEN_SECRET,
+    accessTokenLife: ACCESS_TOKEN_LIFE,
+    refreshTokenLife: REFRESH_TOKEN_LIFE,
   },
 };

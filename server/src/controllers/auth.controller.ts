@@ -8,6 +8,7 @@ import jwt from 'jsonwebtoken';
 import { Types } from 'mongoose';
 import { ContainerTypes, ValidatedRequest, ValidatedRequestSchema } from 'express-joi-validation';
 import { AuthorizationError, ConflictError } from '@shared/classes/exceptions';
+import { UserRoles } from '@shared/types/UserRoles';
 
 interface RegisterRequest extends ValidatedRequestSchema {
   [ContainerTypes.Body]: {
@@ -15,6 +16,9 @@ interface RegisterRequest extends ValidatedRequestSchema {
     lastname: string;
     email: string;
     password: string;
+    roles?: {
+      Admin: UserRoles;
+    };
   };
 }
 
@@ -36,12 +40,20 @@ export const register = asyncHandler(
       return;
     }
 
-    const result = await User.create({
+    /* Create new user */
+    const user = new User({
       firstname,
       lastname,
       email,
       password,
     });
+    /* Set roles for user if given */
+    if (req.body.roles !== undefined) {
+      user.roles = { User: UserRoles.USER, ...req.body.roles };
+    }
+
+    /* Save user to DB */
+    const result = await user.save();
     logger.trace(result);
 
     res.status(201).json({ success: `New user ${email} created.` });
@@ -71,7 +83,7 @@ export const login = asyncHandler(async (req: ValidatedRequest<LoginRequest>, re
     },
     config.jwt.accessTokenSecret,
     {
-      expiresIn: '10m',
+      expiresIn: config.jwt.accessTokenLife,
     }
   );
   const newRefreshToken = jwt.sign(
@@ -80,7 +92,7 @@ export const login = asyncHandler(async (req: ValidatedRequest<LoginRequest>, re
     },
     config.jwt.refreshTokenSecret,
     {
-      expiresIn: '1h',
+      expiresIn: config.jwt.refreshTokenLife,
     }
   );
 
@@ -105,7 +117,7 @@ export const login = asyncHandler(async (req: ValidatedRequest<LoginRequest>, re
   res.cookie('jwt', newRefreshToken, {
     httpOnly: true,
     sameSite: 'none',
-    maxAge: 60 * 60 * 1000,
+    maxAge: config.cookie.jwtLife,
     secure: true,
   });
   res.json({ accessToken });
@@ -162,7 +174,7 @@ export const refresh = asyncHandler(async (req: Request, res: Response, next: Ne
       },
       config.jwt.accessTokenSecret,
       {
-        expiresIn: '10m',
+        expiresIn: config.jwt.accessTokenLife,
       }
     );
     const newRefreshToken = jwt.sign(
@@ -171,7 +183,7 @@ export const refresh = asyncHandler(async (req: Request, res: Response, next: Ne
       },
       config.jwt.refreshTokenSecret,
       {
-        expiresIn: '1h',
+        expiresIn: config.jwt.refreshTokenLife,
       }
     );
 
@@ -183,7 +195,7 @@ export const refresh = asyncHandler(async (req: Request, res: Response, next: Ne
     res.cookie('jwt', newRefreshToken, {
       httpOnly: true,
       sameSite: 'none',
-      maxAge: 60 * 60 * 1000,
+      maxAge: config.cookie.jwtLife,
       secure: true,
     });
     res.json({ accessToken });
