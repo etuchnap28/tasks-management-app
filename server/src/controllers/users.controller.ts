@@ -23,11 +23,12 @@ interface ChangePasswordRequest extends ValidatedRequestSchema {
 
 export const editUser = asyncHandler(
   async (req: ValidatedRequest<EditUserRequest>, res: Response, next: NextFunction) => {
-    if (req.params.userId === '') {
-      next(new APIError('Bad request', HTTPStatusCode.BAD_REQUEST, 'userId is required'));
+    const userId = req.context?.decodedPayload.user;
+    if (userId === undefined) {
+      next(new APIError('Bad request', HTTPStatusCode.UNAUTHORIZED, 'Unauthorized'));
       return;
     }
-    const user = await User.findById(req.params.userId).exec();
+    const user = await User.findById(userId).exec();
     if (user == null) {
       next(new APIError('Bad request', HTTPStatusCode.BAD_REQUEST, 'Can not find user'));
       return;
@@ -45,11 +46,12 @@ export const editUser = asyncHandler(
 
 export const changePassword = asyncHandler(
   async (req: ValidatedRequest<ChangePasswordRequest>, res: Response, next: NextFunction) => {
-    if (req.params.userId === '') {
-      next(new APIError('Bad request', HTTPStatusCode.BAD_REQUEST, 'userId is required'));
+    const userId = req.context?.decodedPayload.user;
+    if (userId === undefined) {
+      next(new APIError('Bad request', HTTPStatusCode.UNAUTHORIZED, 'Unauthorized'));
       return;
     }
-    const user = await User.findById(req.params.userId).exec();
+    const user = await User.findById(userId).exec();
     if (user == null) {
       next(new APIError('Bad request', HTTPStatusCode.BAD_REQUEST, 'can not find user'));
       return;
