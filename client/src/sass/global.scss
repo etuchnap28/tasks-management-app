@@ -1,0 +1,13 @@
+@use './variables' as var;
+@import './button';
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var.$font-stack;
+  font-size: var.$base-font-size;
+}
